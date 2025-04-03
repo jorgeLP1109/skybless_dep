@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="giftcards-container">
+    <h2>Recargar: {{ juego.nombre }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="monto" class="form-label">Selecciona el monto:</label>
+            <select id="monto" name="monto" class="form-select" required>
+                {% for monto in juego.monto %}
+                <option value="{{ monto }}">{{ monto }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="jugador_id" class="form-label">ID del jugador:</label>
+            <input type="text" id="jugador_id" name="jugador_id" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-success">Enviar Recarga</button>
+    </form>
+</div>
+{% endblock %}

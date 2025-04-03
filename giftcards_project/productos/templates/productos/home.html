@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="background-image"></div>
+
+<div class="carousel-container" style="position: relative; max-width: 100%; overflow: hidden;">
+    <div id="carousel" class="carousel" style="display: flex; transition: transform 0.3s ease;">
+        {% for image in carousel_images %}
+            <div class="carousel-item">
+                <img src="{{ image.image.url }}" alt="{{ image.title }}" class="carousel-image">
+            </div>
+        {% endfor %}
+    </div>
+
+    <button class="carousel-arrow left" onclick="moveCarousel(-1)" style="position: absolute; top: 50%; left: 10px; transform: translateY(-50%); background: rgba(0, 0, 0, 0.5); color: white; border: none; font-size: 24px; padding: 10px; cursor: pointer; border-radius: 50%;">
+        &#10094;
+    </button>
+
+    <button class="carousel-arrow right" onclick="moveCarousel(1)" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); background: rgba(0, 0, 0, 0.5); color: white; border: none; font-size: 24px; padding: 10px; cursor: pointer; border-radius: 50%;">
+        &#10095;
+    </button>
+</div>
+
+<div class="giftcards-container">
+    <h1 class="elegantshadow">Compra tus Giftcards</h1>
+    <div class="giftcards-list">
+        {% for giftcard in giftcards %}
+            {% if giftcard.id == 2 %}
+                <a href="{% url 'playstation_giftcards' %}" class="giftcard-item">
+                    <img src="{{ giftcard.image.url }}" alt="{{ giftcard.name }}">
+                    <h3>{{ giftcard.name }}</h3>
+                </a>
+            {% elif giftcard.id == 7 %}
+                <a href="{% url 'roblox_giftcards' %}" class="giftcard-item">
+                    <img src="{{ giftcard.image.url }}" alt="{{ giftcard.name }}">
+                    <h3>{{ giftcard.name }}</h3>
+                </a>
+            {% elif giftcard.id == 17 %}
+                <a href="{% url 'nintendo_giftcards' %}" class="giftcard-item">
+                    <img src="{{ giftcard.image.url }}" alt="{{ giftcard.name }}">
+                    <h3>{{ giftcard.name }}</h3>
+                </a>
+            {% elif giftcard.id == 28 %}
+                <a href="{% url 'steam_giftcards' %}" class="giftcard-item">
+                    <img src="{{ giftcard.image.url }}" alt="{{ giftcard.name }}">
+                    <h3>{{ giftcard.name }}</h3>
+                </a>
+            {% elif giftcard.id == 47 %}
+                <a href="{% url 'itunes_giftcards' %}" class="giftcard-item">
+                    <img src="{{ giftcard.image.url }}" alt="{{ giftcard.name }}">
+                    <h3>{{ giftcard.name }}</h3>
+                </a>
+            {% elif giftcard.id == 67 %}
+                <a href="{% url 'xbox_giftcards' %}" class="giftcard-item">
+                    <img src="{{ giftcard.image.url }}" alt="{{ giftcard.name }}">
+                    <h3>{{ giftcard.name }}</h3>
+                </a>
+            {% elif giftcard.id == 78 %}
+                <a href="{% url 'google_play_giftcards' %}" class="giftcard-item">
+                    <img src="{{ giftcard.image.url }}" alt="{{ giftcard.name }}">
+                    <h3>{{ giftcard.name }}</h3>
+                </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

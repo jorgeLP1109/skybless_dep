@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./giftcards_project/productos/test_"
+    ]
+}

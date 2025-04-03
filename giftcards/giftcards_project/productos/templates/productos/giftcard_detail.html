@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="giftcard-detail" style="display: flex; flex-wrap: wrap; align-items: flex-start;">
+    <div style="flex: 1; min-width: 300px; margin-right: 20px;">
+        <h1 class="texto-destacado">{{ giftcard.name }}</h1>
+        <img src="{{ giftcard.image.url }}" alt="{{ giftcard.name }}" style="max-width: 100%; height: auto;">
+    </div>
+    <div style="flex: 2; min-width: 300px; text-align: left;">
+        <p style="text-align: left; font-size: 16px; color: #555; margin: 10px 0; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; max-width: 800px; float: left;">
+            {{ giftcard.description }}
+        </p>
+
+        <h2 class="giftcard_des">Selecciona el monto</h2>
+        <form method="post" action="{% url 'agregar_al_carrito' giftcard.id %}">  {# Enlace a agregar_al_carrito #}
+            {% csrf_token %}
+            <select name="price_id">  {# Mantén el select para el precio #}
+                {% for price in giftcard.prices.all %}
+                    <option value="{{ price.id }}">{{ price.amount }} USD</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="buy-button">Agregar al carrito</button>  {# Cambiado a "Agregar al carrito" #}
+        </form>
+    </div>
+</div>
+{% endblock %}

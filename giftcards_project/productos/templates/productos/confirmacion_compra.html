@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .confirmation-container {
+        width: 80%;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 30px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .confirmation-container h2 {
+        color: #28a745; /* Verde para éxito */
+        margin-bottom: 20px;
+    }
+
+    .confirmation-container .card {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .confirmation-container .card h3 {
+        margin-bottom: 10px;
+    }
+
+    .confirmation-container .btn-primary {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        text-decoration: none;
+    }
+
+    .confirmation-container .btn-primary:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<div class="confirmation-container">
+    <h2>¡Compra Exitosa!</h2>
+    <p>Gracias por tu compra. Aquí está tu código de GiftCard:</p>
+
+    <div class="card">
+        <h3>Código: <strong>{{ codigo }}</strong></h3>
+        <p>Tarjeta: {{ tarjeta.name }}</p>
+    </div>
+
+    <a href="{% url 'giftcards' %}" class="btn btn-primary">Volver a la tienda</a>
+</div>
+{% endblock %}

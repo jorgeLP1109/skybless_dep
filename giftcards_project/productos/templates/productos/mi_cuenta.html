@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>Mi Cuenta</h1>
+
+    <h2>Historial de Tarjetas Compradas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Código</th>
+                <th>Monto</th>
+                <th>Fecha de Compra</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for giftcard in giftcards %}
+            <tr>
+                <td>{{ giftcard.name }}</td>
+                <td>{{ giftcard.code }}</td>
+                <td>{{ giftcard.amount }}</td>
+                <td>{{ giftcard.purchase_date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Gráfico de Tarjetas Compradas</h2>
+    <img src="data:image/png;base64,{{ chart }}" alt="Gráfico de tarjetas compradas">
+</div>
+{% endblock %}

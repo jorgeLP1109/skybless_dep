@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Pagar con Tarjeta de Crédito</h2>
+<form action="{% url 'stripe_checkout' %}" method="POST">
+    <button type="submit">Proceder al Pago</button>
+</form>
+{% endblock %}

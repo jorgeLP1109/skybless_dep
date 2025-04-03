@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+<style>
+    .receipt-container {
+        width: 80%;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 30px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        font-family: Arial, sans-serif;
+    }
+
+    .receipt-container h1 {
+        color: #333;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .receipt-container table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    .receipt-container th, .receipt-container td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .receipt-container th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+    .receipt-container tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .receipt-container tbody tr:hover {
+        background-color: #e0e0e0;
+    }
+
+    .receipt-container .total {
+        text-align: right;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    .receipt-container .print-btn {
+        display: block;
+        width: 200px;
+        margin: 20px auto;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 5px;
+    }
+
+    .receipt-container .print-btn:hover {
+        background-color: #0056b3;
+    }
+</style>
+<div class="receipt-container">
+    <h1>Recibo de Compra</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Código</th>
+                <th>Monto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in detalles_con_codigos %}
+                <tr>
+                    <td>{{ item.nombre }}</td>
+                    <td>{{ item.codigo }}</td>
+                    <td>{{ item.monto|floatformat:2 }} USD / Bs. {{ item.monto|mul:tasa_cambio|floatformat:2 }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p class="total"><b>Subtotal:</b> ${{ subtotal|floatformat:2 }} USD / Bs. {{ subtotal|mul:tasa_cambio|floatformat:2 }}</p>
+    <p class="total"><b>IVA (16%):</b> ${{ iva|floatformat:2 }} USD / Bs. {{ iva|mul:tasa_cambio|floatformat:2 }}</p>
+    <p class="total"><b>Total:</b> ${{ total|floatformat:2 }} USD / Bs. {{ total|mul:tasa_cambio|floatformat:2 }}</p>
+
+    <a href="{% url 'imprimir_recibo' compra.id %}" class="print-btn" target="_blank">Imprimir Recibo</a>
+</div>
+{% endblock %}

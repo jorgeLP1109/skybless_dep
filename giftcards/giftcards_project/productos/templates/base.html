@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gift Cards{% endblock %}</title>
+    
+    <!-- Cargar la etiqueta static -->
+    {% load static %}
+
+    <link rel="stylesheet" href="{% static 'productos/styles.css' %}">
+    
+    
+    
+</head>
+<body>
+    <!-- Fondo dinámico -->
+    <div class="background-image"></div>
+
+    
+    <header>
+        <canvas id="header-canvas"></canvas>
+        <div class="logo">
+            <!-- Aquí puedes agregar tu logo -->
+            <img src="{% static 'imagenes/logo.png' %}" alt="Logo">
+            <p style="color: #fff;">Skybless</p>
+        </div>
+        <nav>
+            <a href="{% url 'listar_giftcards' %}">Gift Cards</a>            
+            <a href="{% url 'promociones' %}">Promociones</a>
+            <a class="nav-link" href="{% url 'lista_juegos' %}">Recarga Directa</a> 
+            <a href="{% url 'user_dashboard' %}">Ir al Dashboard</a>          
+            
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+    <footer style="background-color: #222; color: white; padding: 20px 0;">
+        <div style="max-width: 1200px; margin: auto; padding: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+            <!-- Sección de medios de pago -->
+            <div style="flex: 1; min-width: 250px;">
+                <h4 style="margin-bottom: 10px; font-size: 18px; color: #fff;">Medios de Pago</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <img src="{% static 'imagenes/medios-pago/visa.png' %}" alt="Visa" style="width: 50px; height: auto;">
+                    <img src="{% static 'imagenes/medios-pago/mastercard.png' %}" alt="MasterCard" style="width: 50px; height: auto;">
+                    <img src="{% static 'imagenes/medios-pago/paypal.png' %}" alt="PayPal" style="width: 50px; height: auto;">
+                    <img src="{% static 'imagenes/medios-pago/movil.png' %}" alt="Movil" style="width: 50px; height: auto;">
+                    <img src="{% static 'imagenes/medios-pago/bitcoin.png' %}" alt="Bitcoin" style="width: 50px; height: auto;">
+                </div>
+            </div>
+    
+            <!-- Sección del enlace "Más" -->
+            <div style="flex: 1; min-width: 250px; text-align: right;">
+                <h4 style="margin-bottom: 10px; font-size: 18px; color: #fff;">Más</h4>
+                <a href="https:///" target="_blank" style="color: #a0a032; text-decoration: none; font-size: 16px;">
+                    Guías de Pago
+                </a>
+            </div>
+        </div>
+    
+        <hr style="border: none; border-top: 1px solid #444; margin: 20px 0;">
+    
+        <!-- Sección de redes sociales -->
+        <div style="max-width: 1200px; margin: auto; display: flex; justify-content: center; align-items: center; gap: 20px;">
+            <a href="https://facebook.com" target="_blank" style="color: #fff;">
+                <img src="{% static 'imagenes/redes-sociales/facebook.png' %}" alt="Facebook" style="width: 40px; height: auto;">
+            </a>
+            <a href="https://twitter.com" target="_blank" style="color: #fff;">
+                <img src="{% static 'imagenes/redes-sociales/twitter.png' %}" alt="Twitter" style="width: 40px; height: auto;">
+            </a>
+            <a href="https://instagram.com" target="_blank" style="color: #fff;">
+                <img src="{% static 'imagenes/redes-sociales/instagram.png' %}" alt="Instagram" style="width: 40px; height: auto;">
+            </a>
+            
+            <a href="https://youtube.com" target="_blank" style="color: #fff;">
+                <img src="{% static 'imagenes/redes-sociales/youtube.png' %}" alt="YouTube" style="width: 40px; height: auto;">
+            </a>
+        </div>
+    
+        <div style="text-align: center; margin-top: 20px; font-size: 14px; color: #aaa;">
+            &copy; 2024 Jorge Pacheco Web. Todos los derechos reservados.
+        </div>
+    </footer>
+    
+    
+
+    <!-- JavaScript para el carrusel -->
+    <script>
+        let currentIndex = 0;
+        const items = document.querySelectorAll('.carousel-item');
+        const totalItems = items.length;
+    
+        function moveCarousel(direction) {
+            currentIndex += direction;
+    
+            // Verificar si el índice está fuera de rango y ajustarlo
+            if (currentIndex < 0) {
+                currentIndex = totalItems - 1; // Mover al último elemento
+            } else if (currentIndex >= totalItems) {
+                currentIndex = 0; // Mover al primer elemento
+            }
+    
+            // Desplazar el carrusel
+            const carousel = document.querySelector('.carousel');
+            carousel.style.transform = `translateX(-${currentIndex * 100}%)`;
+        }
+    
+        // Configurar el desplazamiento automático
+        const autoMove = setInterval(() => {
+            moveCarousel(1); // Avanzar automáticamente
+        }, 5000); // Cambiar cada 5 segundos
+    
+        // Pausar el desplazamiento automático al interactuar con las flechas
+        const leftArrow = document.querySelector('.arrow-left');
+        const rightArrow = document.querySelector('.arrow-right');
+    
+        leftArrow.addEventListener('click', () => {
+            clearInterval(autoMove); // Detener el desplazamiento automático temporalmente
+            moveCarousel(-1);
+        });
+    
+        rightArrow.addEventListener('click', () => {
+            clearInterval(autoMove); // Detener el desplazamiento automático temporalmente
+            moveCarousel(1);
+        });
+    </script>
+    
+    <!-- JavaScript para el efecto del header -->
+    <script>
+        const canvas = document.getElementById('header-canvas');
+        const ctx = canvas.getContext('2d');
+        const particles = [];
+        const numParticles = 150;
+        const maxDistance = 150;
+        let mouseX = null;
+        let mouseY = null;
+
+        canvas.width = window.innerWidth;
+        canvas.height = 150;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.radius = 2;
+            }
+
+            move() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+            }
+        }
+
+        function connectParticles() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < maxDistance) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${1 - distance / maxDistance})`;
+                        ctx.stroke();
+                    }
+                }
+
+                // Conexión con el puntero
+                if (mouseX !== null && mouseY !== null) {
+                    const dx = particles[i].x - mouseX;
+                    const dy = particles[i].y - mouseY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < maxDistance) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(mouseX, mouseY);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${1 - distance / maxDistance})`;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animateHeader() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(particle => {
+                particle.move();
+                particle.draw();
+            });
+
+            connectParticles();
+            requestAnimationFrame(animateHeader);
+        }
+
+        window.addEventListener('mousemove', (event) => {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+
+        window.addEventListener('mouseout', () => {
+            mouseX = null;
+            mouseY = null;
+        });
+
+        for (let i = 0; i < numParticles; i++) {
+            particles.push(new Particle());
+        }
+
+        animateHeader();
+    </script>
+
+</body>
+</html>
