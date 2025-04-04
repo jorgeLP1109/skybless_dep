@@ -18,7 +18,7 @@ DEBUG = True
 
 
 
-ALLOWED_HOSTS = ['s4game.com', '46.202.154.191', 'localhost'] 
+ALLOWED_HOSTS = ['yourdomain.com', '127.0.0.1', 'localhost'] 
 
 
 # Application definition

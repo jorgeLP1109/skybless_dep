@@ -227,7 +227,12 @@ class Carrito(models.Model):
                 total += precio.amount
         return total
     
+class CredencialesBNC(models.Model):
+    client_guid = models.CharField(max_length=36)
+    master_key = models.CharField(max_length=255)
 
+    def __str__(self):
+        return "Credenciales BNC"
 
     
     

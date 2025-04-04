@@ -1,8 +1,10 @@
-{% extends 'base.html' %}  
+{% extends 'base.html' %}
 
 {% load custom_filters %}
 
-{% block content %}<style>
+{% block content %}
+<style>
+    			
     .payment-container {
         width: 80%;
         max-width: 600px;
@@ -55,36 +57,26 @@
     .payment-container p {
         color: #777;
     }
+
+                        
+    /* ... (estilos CSS) */
 </style>
 
-  <h1>Selecciona el Método de Pago</h1>
+<h1>Selecciona el Método de Pago</h1>
 
-  <h2>Tu Compra:</h2>
-  <ul>
+<h2>Tu Compra:</h2>
+<ul>
     {% for item in items %}
-      <li>{{ item.giftcard.name }} - {{ item.price.amount }} USD</li>
+        <li>{{ item.giftcard.name }} - {{ item.price.amount }} USD</li>
     {% endfor %}
-  </ul>
-  <p>Total: {{ items|sum_property:"price.amount" }} USD / {{ items|sum_property:"price.amount"|multiply:tasa_cambio }} Bs.</p>
+</ul>
+<p>Total: {{ items|sum_property:"price.amount" }} USD / {{ items|sum_property:"price.amount"|multiply:tasa_cambio }} Bs.</p>
 
-  <form method="post" action="{% url 'metodo_pago' 'post_virtual' %}">
+<form method="post" action="{% url 'metodo_pago' 'c2p' %}">
     {% csrf_token %}
-    <h2>Pago con Post Virtual</h2>
-    {{ post_virtual_form.as_p }}
-    <button type="submit">Pagar con Post Virtual</button>
-  </form>
-
-  <form method="post" action="{% url 'metodo_pago' 'pago_movil' %}">
-    {% csrf_token %}
-    <h2>Pago Móvil</h2>
-    {{ pago_movil_form.as_p }}
-    <button type="submit">Pagar con Pago Móvil</button>
-  </form>
-
-  <form method="post" action="{% url 'metodo_pago' 'ficticio' %}">
-    {% csrf_token %}
-    <h2>Pago Ficticio (Pruebas)</h2>
-    <button type="submit">Simular Pago Ficticio</button>
-  </form>
+    <h2>Pago C2P</h2>
+    {{ pago_c2p_form.as_p }}
+    <button type="submit">Pagar con C2P</button>
+</form>
 
 {% endblock %}

@@ -44,9 +44,16 @@ from decimal import Decimal
 from django.contrib.auth.views import redirect_to_login
 from .forms import PagoPostVirtualForm, PagoMovilForm, PagoC2PForm
 from .models import Carrito, Compra, Transaction
-#from utils import obtener_tasa_cambio
 from .banco_api import * # Importar funciones de banco_api.py
 from Crypto.Cipher import AES  # Importar clase AES
+from .models import CredencialesBNC
+from .forms import PagoC2PForm
+import hashlib
+import base64
+
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad
+import json
 
 
 def solicitar_recarga(request):
@@ -637,15 +644,180 @@ def eliminar_del_carrito(request, codigo_giftcard_id):
 
 
 
-@login_required
-def procesar_compra(request):
-    return redirect(reverse('metodo_pago', args=['ficticio']))
+def obtener_credenciales():
+    """Obtiene las credenciales del modelo CredencialesBNC."""
+    try:
+        credenciales = CredencialesBNC.objects.first()
+        return credenciales.client_guid, credenciales.master_key
+    except CredencialesBNC.DoesNotExist:
+        return None, None
+
+def obtener_working_key():
+    """Obtiene la WorkingKey de la API del BNC o de la caché."""
+    # Aquí iría la lógica para obtener la WorkingKey de la caché o de la base de datos temporal
+    # Por ahora, simularemos la obtención de la WorkingKey
+    client_guid, master_key = obtener_credenciales()
+    if client_guid and master_key:
+        return obtener_working_key_ejemplo(client_guid, master_key)
+    else:
+        return None
+
+def obtener_working_key_ejemplo(client_guid, master_key):
+    """Simula la solicitud Logon y genera una WorkingKey de ejemplo."""
+    # Simulación de la encriptación AES
+    def encrypt_aes(data, key, iv):
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        return base64.b64encode(cipher.encrypt(pad(data.encode('utf-8'), AES.block_size))).decode('utf-8')
+
+    # Simulación del hash SHA256
+    def hash_sha256(data):
+        return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+    # Datos de ejemplo para la solicitud Logon
+    logon_data = {"ClientGUID": client_guid}
+    logon_data_json = json.dumps(logon_data)
+
+    # Simulación de la encriptación y el hash
+    iv = get_random_bytes(AES.block_size)
+    encrypted_value = encrypt_aes(logon_data_json, master_key.encode('utf-8'), iv)
+    validation_hash = hash_sha256(logon_data_json)
+
+    # Simulación de la respuesta de la API
+    response_data = {
+        "status": "OK",
+        "message": "000000Se ha iniciado sesión exitosamente.",
+        "value": encrypted_value,
+        "validation": validation_hash
+    }
+    #simulacion de la desencriptacion del value, para obtener la working key
+    working_key = "clave_de_trabajo_de_ejemplo"
+
+    return working_key
+
+def procesar_pago_c2p(request, form, amount):
+    """Simula el procesamiento de un pago C2P."""
+    working_key = obtener_working_key()
+    if working_key:
+        id_transaction, reference = realizar_pago_c2p_ejemplo(
+            working_key, form.cleaned_data['bank_code'],
+            form.cleaned_data['debtor_cellphone'], form.cleaned_data['debtor_id'],
+            amount, form.cleaned_data['token'], "15015840"
+        )
+        return reference, id_transaction
+    else:
+        raise Exception("Credenciales no configuradas.")
+
+def realizar_pago_c2p_ejemplo(working_key, debtor_bank_code, debtor_cellphone, debtor_id, amount, token, terminal):
+    """Simula la solicitud SendC2P y procesa el pago."""
+    # Simulación de la encriptación AES
+    def encrypt_aes(data, key, iv):
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        return base64.b64encode(cipher.encrypt(pad(data.encode('utf-8'), AES.block_size))).decode('utf-8')
+
+    # Simulación del hash SHA256
+    def hash_sha256(data):
+        return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+    # Datos de ejemplo para la solicitud SendC2P
+    c2p_data = {
+        "DebtorBankCode": debtor_bank_code,
+        "DebtorCellPhone": debtor_cellphone,
+        "DebtorID": debtor_id,
+        "Amount": amount,
+        "Token": token,
+        "Terminal": terminal
+    }
+    c2p_data_json = json.dumps(c2p_data)
+
+    # Simulación de la encriptación y el hash
+    iv = get_random_bytes(AES.block_size)
+    encrypted_value = encrypt_aes(c2p_data_json, working_key.encode('utf-8'), iv)
+    validation_hash = hash_sha256(c2p_data_json)
+
+    # Simulación de la respuesta de la API
+    response_data = {
+        "status": "OK",
+        "message": "000000C2P procesado por un monto de 101.00, Nro de Referencia: 123456",
+        "value": encrypted_value,
+        "validation": validation_hash
+    }
+    #simulacion de la desencriptacion del value, para obtener el idtransaction y la referencia.
+    id_transaction = "7891011"
+    reference = "123456"
+
+    return id_transaction, reference
 
 class DecimalEncoder(DjangoJSONEncoder):
     def default(self, obj):
         if isinstance(obj, Decimal):
             return str(obj)
         return super().default(obj)
+
+@login_required
+def procesar_compra(request):
+    try:
+        carrito = request.user.carritos.get()
+        if not carrito.productos.exists():
+            messages.error(request, "Tu carrito está vacío.")
+            return redirect('mostrar_carrito')
+
+        detalles_compra = []
+        monto_total = 0
+        codigos_utilizados = []
+        giftcards_compradas = []
+
+        with transaction.atomic():
+            for codigo_giftcard in carrito.productos.all():
+                giftcard = codigo_giftcard.tarjeta.giftcard
+                price = codigo_giftcard.prices.first()
+                monto = price.amount
+
+                detalles_compra.append({
+                    'nombre': giftcard.name,
+                    'monto': str(monto),  # Convertir Decimal a str
+                })
+                codigos_utilizados.append(codigo_giftcard.codigo)
+                giftcards_compradas.append(giftcard)
+                monto_total += monto
+
+                codigo_giftcard.disponible = False
+                codigo_giftcard.usado = True
+                codigo_giftcard.usuario_asociado = request.user
+                codigo_giftcard.fecha_uso = timezone.now()
+                codigo_giftcard.save()
+
+            transaccion = Transaction.objects.create(
+                metodo_pago='ficticio',  # Usamos 'ficticio' como marcador de posición
+                monto=monto_total,
+                usuario=request.user,
+                codigo=codigos_utilizados[0]
+            )
+
+            compra = Compra.objects.create(
+                usuario=request.user,
+                transaction=transaccion,
+                codigos_giftcard=codigos_utilizados,
+                detalles_compra=json.dumps(detalles_compra, cls=DecimalEncoder),  # Serializar con DecimalEncoder
+                monto_pagado=str(monto_total)  # Convertir Decimal a str
+            )
+            compra.giftcards.set(giftcards_compradas)
+
+            carrito.productos.clear()
+
+            messages.success(request, "¡Compra realizada con éxito!")
+            return redirect(reverse('mostrar_recibo', args=[compra.id]))
+
+    except Carrito.DoesNotExist:
+        messages.error(request, "No tienes un carrito.")
+        return redirect('mostrar_carrito')
+
+    except Exception as e:
+        print(f"Error en procesar_compra: {e}")
+        messages.error(request, "Ocurrió un error durante la compra. Inténtalo de nuevo más tarde.")
+        return render(request, 'productos/pago_fallido.html', {
+            'error': 'Ocurrió un error durante la compra. Inténtalo de nuevo más tarde.'
+        })
+
 
 class MetodoPagoView(View):
     def get(self, request, metodo):
@@ -662,7 +834,7 @@ class MetodoPagoView(View):
                 }
                 for codigo_giftcard in carrito.productos.all()
             ]
-            tasa_cambio = obtener_tasa_cambio()
+            tasa_cambio = 1 # Simulación de la tasa de cambio
 
             post_virtual_form = PagoPostVirtualForm()
             pago_movil_form = PagoMovilForm()
@@ -700,114 +872,87 @@ class MetodoPagoView(View):
                     if metodo == 'pago_movil':
                         pago_movil_form = PagoMovilForm(request.POST)
                         if pago_movil_form.is_valid():
-                            try:
-                                # Lógica para procesar el pago móvil con la API proporcionada
-                                import requests
-                                import json
+                            monto = price.amount
+                            monto_total += monto
+                            detalles_compra.append({
+                                'nombre': giftcard.name,
+                                'monto': monto,
+                            })
+                            codigos_utilizados.append(codigo_giftcard.codigo)
+                            giftcards_compradas.append(giftcard)
 
-                                data = {
-                                    "DebtorID": pago_movil_form.cleaned_data['cedula'],
-                                    "DebtorCellPhone": pago_movil_form.cleaned_data['telefono'],
-                                    "BankCode": pago_movil_form.cleaned_data['banco'],
-                                    "Amount": float(price.amount),  # Asegúrate de que price.amount sea un número
-                                    "Terminal": "15015840",  # Valor fijo proporcionado
-                                    "ChildClientID": "",  # Valor fijo proporcionado
-                                    "BranchID": ""  # Valor fijo proporcionado
-                                }
+                            codigo_giftcard.disponible = False
+                            codigo_giftcard.usado = True
+                            codigo_giftcard.usuario_asociado = request.user
+                            codigo_giftcard.fecha_uso = timezone.now()
+                            codigo_giftcard.save()
 
-                                headers = {'Content-Type': 'application/json'}
-                                response = requests.post(
-                                    'https://servicios.bncenlinea.com:16500/api/MobPayment/ReverseC2P',
-                                    headers=headers,
-                                    data=json.dumps(data)
-                                )
-
-                                response_data = response.json()
-
-                                if response_data['status'] == 'OK':
-                                    # Procesa la respuesta exitosa
-                                    # Aquí debes desencriptar 'response_data["value"]' y extraer la referencia y el ID de transacción
-                                    # Por simplicidad, asumimos que obtienes los valores directamente (reemplaza con tu lógica de desencriptación)
-                                    referencia = "referencia_desencriptada" # Reemplaza con el valor real
-                                    codigo_autorizacion = "codigo_autorizacion_desencriptado" # Reemplaza con el valor real
-
-                                    pago_exitoso = True
-                                else:
-                                    # Procesa la respuesta de error
-                                    messages.error(request, f"Error en el pago móvil: {response_data['message']}")
-                                    pago_exitoso = False
-
-                            except Exception as e:
-                                messages.error(request, f"Error al procesar el pago móvil: {e}")
-                                pago_exitoso = False
-                        else:
-                            messages.error(request, "Formulario de Pago Móvil inválido.")
-                    elif metodo == 'c2p':
+                    elif metodo == 'pago_c2p':
                         pago_c2p_form = PagoC2PForm(request.POST)
                         if pago_c2p_form.is_valid():
-                            try:
-                                referencia, id_transaccion = procesar_pago_c2p(request, pago_c2p_form, price.amount)
-                                pago_exitoso = True
-                            except Exception as e:
-                                pago_exitoso = False
-                                messages.error(request, f"Error al procesar el pago C2P: {e}")
-                        else:
-                            pago_exitoso = False
-                    else:
-                        pago_exitoso = metodo == 'ficticio'
+                            monto = price.amount
+                            monto_total += monto
+                            detalles_compra.append({
+                                'nombre': giftcard.name,
+                                'monto': monto,
+                            })
+                            codigos_utilizados.append(codigo_giftcard.codigo)
+                            giftcards_compradas.append(giftcard)
 
-                    if pago_exitoso:
-                        codigo_giftcard.disponible = False
-                        codigo_giftcard.usado = True
-                        codigo_giftcard.usuario_asociado = request.user
-                        codigo_giftcard.fecha_uso = timezone.now()
-                        codigo_giftcard.save()
-                        codigos_utilizados.append(codigo_giftcard.codigo)
-                        detalles_compra.append({
-                            'nombre': giftcard.name,
-                            'codigo': codigo_giftcard.codigo,
-                            'monto': str(price.amount)
-                        })
-                        giftcards_compradas.append(giftcard)
-                        monto_total += price.amount
-                    else:
-                        messages.error(request, "El pago ha fallado. Inténtalo de nuevo.")
-                        return render(request, 'productos/pago_fallido.html', {
-                            'error': 'El pago ha fallado. Inténtalo de nuevo.'
-                        })
+                            codigo_giftcard.disponible = False
+                            codigo_giftcard.usado = True
+                            codigo_giftcard.usuario_asociado = request.user
+                            codigo_giftcard.fecha_uso = timezone.now()
+                            codigo_giftcard.save()
 
-                if codigos_utilizados:
-                    transaccion = Transaction.objects.create(
-                        metodo_pago=metodo,
-                        monto=monto_total,
-                        usuario=request.user,
-                        codigo=codigos_utilizados[0]
-                    )
+                    elif metodo == 'post_virtual':
+                        post_virtual_form = PagoPostVirtualForm(request.POST)
+                        if post_virtual_form.is_valid():
+                            monto = price.amount
+                            monto_total += monto
+                            detalles_compra.append({
+                                'nombre': giftcard.name,
+                                'monto': monto,
+                            })
+                            codigos_utilizados.append(codigo_giftcard.codigo)
+                            giftcards_compradas.append(giftcard)
 
-                    compra = Compra.objects.create(
-                        usuario=request.user,
-                        transaction=transaccion,
-                        codigos_giftcard=codigos_utilizados,
-                        detalles_compra=detalles_compra,
-                        monto_pagado=monto_total
-                    )
-                    compra.giftcards.set(giftcards_compradas)
+                            codigo_giftcard.disponible = False
+                            codigo_giftcard.usado = True
+                            codigo_giftcard.usuario_asociado = request.user
+                            codigo_giftcard.fecha_uso = timezone.now()
+                            codigo_giftcard.save()
 
-                    carrito.productos.clear()
+                transaccion = Transaction.objects.create(
+                    metodo_pago=metodo,
+                    monto=monto_total,
+                    usuario=request.user,
+                    codigo=codigos_utilizados[0]
+                )
 
-                    messages.success(request, "¡Compra realizada con éxito!")
-                    return redirect(reverse('mostrar_recibo', args=[compra.id]))
-                else:
-                    messages.error(request, "No se procesaron códigos válidos.")
-                    return render(request, 'productos/pago_fallido.html', {
-                        'error': 'No se procesaron códigos válidos.'
-                    })
+                compra = Compra.objects.create(
+                    usuario=request.user,
+                    transaction=transaccion,
+                    codigos_giftcard=codigos_utilizados,
+                    detalles_compra=detalles_compra,
+                    monto_pagado=monto_total
+                )
+                compra.giftcards.set(giftcards_compradas)
+
+                carrito.productos.clear()
+
+                messages.success(request, "¡Compra realizada con éxito!")
+                return redirect(reverse('mostrar_recibo', args=[compra.id]))
+
+        except Carrito.DoesNotExist:
+            messages.error(request, "No tienes un carrito.")
+            return redirect('mostrar_carrito')
 
         except Exception as e:
             print(f"Error en MetodoPagoView: {e}")
-            messages.error(request, "Ocurrió un error durante el pago. Inténtalo de nuevo más tarde.")
+            messages.error(request, "Ocurrió un error durante la compra. Inténtalo de nuevo más tarde.")
             return render(request, 'productos/pago_fallido.html', {
-                'error': 'Ocurrió un error durante el pago. Inténtalo de nuevo más tarde.'
+                'error': 'Ocurrió un error durante la compra. Inténtalo de nuevo más tarde.'
             })
         
 
@@ -825,7 +970,7 @@ class MetodoPagoView(View):
 
 def mostrar_recibo(request, compra_id):
     compra = get_object_or_404(Compra, pk=compra_id)
-    detalles_con_codigos = compra.detalles_compra if compra.detalles_compra else []
+    detalles_con_codigos = json.loads(compra.detalles_compra) if compra.detalles_compra else []
     tasa_cambio = obtener_tasa_cambio()
 
     subtotal = Decimal('0.00')
@@ -928,31 +1073,6 @@ def roblox_giftcards(request):
 def google_play_giftcards(request):
     giftcards = GiftCard.objects.filter(tipo='google_play')
     tasa_cambio = obtener_tasa_cambio()
-    return render(request, 'productos/google_play_giftcards.html', {'giftcards': giftcards, 'tasa_cambio': tasa_cambio})   
+    return render(request, 'productos/google_play_giftcards.html', {'giftcards': giftcards, 'tasa_cambio': tasa_cambio}) 
 
 
-def pago_movil(request):
-    if request.method == 'POST':
-        form = PagoMovilForm(request.POST)
-        if form.is_valid():
-            banco = form.cleaned_data['banco']
-            telefono = form.cleaned_data['telefono']
-            referencia = form.cleaned_data['referencia']
-
-            # Simulación de verificación de pago (reemplazar con lógica real)
-            verificado = verificar_pago_movil(banco, telefono, referencia)
-
-            if verificado:
-                # Procesar la compra y generar el recibo
-                return procesar_compra(request, metodo='pago_movil', banco=banco, telefono=telefono, referencia=referencia)
-            else:
-                # Mostrar mensaje de error
-                return render(request, 'productos/pago_fallido.html', {'error': 'Pago móvil no verificado.'})
-    else:
-        form = PagoMovilForm()
-    return render(request, 'productos/pago_movil.html', {'form': form})
-
-def verificar_pago_movil(banco, telefono, referencia):
-    # Reemplazar con la lógica real de verificación con el banco
-    # Por ahora, simulamos una verificación exitosa
-    return True

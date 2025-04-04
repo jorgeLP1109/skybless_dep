@@ -8,6 +8,10 @@ from .models import Usuario, GiftCard, Compra, Price, CarouselImage, CodigoGiftC
 from .models import CodigoEnviado
 from .filters import CodigoEnviadoFilter
 from django.urls import reverse
+from .models import CredencialesBNC
+
+admin.site.register(CredencialesBNC)
+
 
 
 @admin.register(JuegoRecarga)

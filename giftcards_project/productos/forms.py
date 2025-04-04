@@ -20,20 +20,14 @@ class PagoPostVirtualForm(forms.Form):
     fecha_vencimiento = forms.CharField(max_length=4)
     cvv = forms.CharField(max_length=3)
 
-BANCOS = (
-    ('BNC', 'Banco Nacional de Crédito'),
-    ('Mercantil', 'Banco Mercantil'),
-    ('Venezuela', 'Banco de Venezuela'),
-    # Agrega otros bancos según sea necesario
-)
-
 class PagoMovilForm(forms.Form):
-    banco = forms.ChoiceField(choices=BANCOS)
-    telefono = forms.CharField(max_length=20)
-    referencia = forms.CharField(max_length=50)  
+    telefono = forms.CharField(max_length=11)
+    banco = forms.CharField(max_length=50) # Puedes usar un ChoiceField para los bancos     
+
+
 
 class PagoC2PForm(forms.Form):
-    telefono = forms.CharField(max_length=11)
-    banco = forms.CharField(max_length=50)
-    terminal = forms.CharField(max_length=8)
-    token = forms.CharField(max_length=8)       
+    debtor_id = forms.CharField(label='Cédula', max_length=20)
+    debtor_cellphone = forms.CharField(label='Teléfono', max_length=15)
+    bank_code = forms.IntegerField(label='Banco')
+    token = forms.CharField(label='Token', max_length=8)
