@@ -14,11 +14,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-8b5cu2ao(tw@17n#fofs(h($50+hb0i3+73!l0q9luq4uv)@mf'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 
 
-ALLOWED_HOSTS = ['yourdomain.com', '127.0.0.1', 'localhost'] 
+ALLOWED_HOSTS = ['s4games', '46.202.154.191'] 
 
 
 # Application definition
